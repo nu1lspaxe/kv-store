@@ -1,0 +1,20 @@
+[package]
+name = "kv-store"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "kv-client"
+path = "src/client.rs"
+
+[dependencies]
+tokio = { version = "1.44.2", features = ["full"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+prost = "0.13.5"
+tonic = "0.13.0"
+log = "0.4.27"
+env_logger = "0.11.8"
+
+[build-dependencies]
+tonic-build = "0.13.0"
