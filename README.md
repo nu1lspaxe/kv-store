@@ -6,6 +6,6 @@ The key-value store is implemented as a gRPC service that allows clients to put 
 
 ## Phase
 - [x] Store key-value pairs in memory and persist them to a json file on disk.
-- [ ] Import Raftconsensus algorithm and use it to ensure that the key-value store is consistent across all nodes.
-- [ ] Watch mechanism (like etcd) to detect changes in the key-value store and notify other nodes.
 - [ ] Utilize RocksDB as the underlying storage engine for the key-value store.
+- [ ] Import Raft consensus algorithm and use it to ensure that the key-value store is consistent across all nodes.
+- [ ] Watch mechanism (like etcd) to detect changes in the key-value store and notify other nodes.
