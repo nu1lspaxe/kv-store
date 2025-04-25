@@ -1,7 +1,7 @@
 use tonic::{Request, Response, Status};
 use crate::store::SharedKvStore;
 use kvstore::kv_store_server::{KvStore, KvStoreServer};
-use kvstore::{PutRequest, PutResponse, GetRequest, GetResponse};
+use kvstore::{PutRequest, PutResponse, GetRequest, GetResponse, ListRequest, ListResponse, KeyValue};
 
 pub mod kvstore {
     tonic::include_proto!("kvstore");
@@ -44,6 +44,20 @@ impl KvStore for KvStoreService {
             .await
             .ok_or_else(|| Status::not_found("Key not found"))?;
         Ok(Response::new(GetResponse { value }))
+    }
+
+    async fn list(
+        &self,
+        request: Request<ListRequest>,
+    ) -> Result<Response<ListResponse>, Status> {
+        let prefix = request.into_inner().prefix;
+        let store = self.store.read().await;
+        let items = store.prefix_scan(&prefix).await;
+        let items = items.into_iter()
+            .map(|(k, v)| KeyValue{ key: k, value: v })
+            .collect();
+
+        Ok(Response::new(ListResponse { items }))
     }
 }
 

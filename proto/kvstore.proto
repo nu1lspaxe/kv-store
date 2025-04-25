@@ -5,6 +5,7 @@ package kvstore;
 service KVStore {
     rpc Put (PutRequest) returns (PutResponse);
     rpc Get (GetRequest) returns (GetResponse);
+    rpc List (ListRequest) returns (ListResponse);
 }
 
 message PutRequest {
@@ -21,4 +22,18 @@ message GetRequest {
 }
 
 message GetResponse {
-    string value = 1;}
+    string value = 1;
+}
+
+message ListRequest {
+    string prefix = 1;
+}
+
+message ListResponse {
+    repeated KeyValue items = 1;
+}
+
+message KeyValue {
+    string key = 1;
+    string value = 2;
+}

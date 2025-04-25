@@ -27,6 +27,24 @@ impl KvStore {
             _ => None,
         }
     }
+
+    pub async fn prefix_scan(&self, prefix: &str) -> Vec<(String, String)> {
+        let mut result = Vec::new();
+        let iter = self.db.prefix_iterator(prefix.as_bytes());
+
+        for item in iter {
+            if let Ok((k, v)) = item {
+                if let (Ok(key), Ok(value)) = (
+                    String::from_utf8(k.to_vec()),
+                    String::from_utf8(v.to_vec())
+                ) {
+                    result.push((key, value));
+                }
+            }
+        }
+
+        result
+    }
 }
 
 pub type SharedKvStore = Arc<RwLock<KvStore>>;
