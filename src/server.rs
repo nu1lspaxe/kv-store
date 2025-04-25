@@ -25,7 +25,7 @@ impl KvStore for KvStoreService {
         request: Request<PutRequest>,
     ) -> Result<Response<PutResponse>, Status> {
         let req = request.into_inner();
-        let mut store = self.store.write().await;
+        let store = self.store.write().await;
         store
             .put(req.key, req.value)
             .await

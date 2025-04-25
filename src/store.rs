@@ -1,47 +1,31 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
-use std::io::{self};
+use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use rocksdb::{DB, Options};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct KvStore {
-    data: HashMap<String, String>,
-    #[serde(skip)]
-    file_path: String,
+    db: DB,
 }
 
 impl KvStore {
-    pub fn new(file_path: &str) -> Self {
-        let data = match File::open(file_path) {
-            Ok(file) => serde_json::from_reader(file).unwrap_or_default(),
-            Err(_) => HashMap::new(),
-        };
-        KvStore {
-            data, 
-            file_path: file_path.to_string(),
-        }
+    pub fn new<P: AsRef<Path>>(path: P) -> Self {
+        let mut opts = Options::default();
+        opts.create_if_missing(true);
+        let db = DB::open(&opts, path).expect("Failed to open RocksDB");
+        KvStore { db }
     }
 
-    pub async fn put(&mut self, key: String, value: String) -> io::Result<()> {
-        self.data.insert(key, value);
-        self.persist()?;
+    pub async fn put(&self, key: String, value: String) -> Result<(), rocksdb::Error> {
+        self.db.put(key, value)?;
         Ok(())
     }
 
     pub async fn get(&self, key: &str) -> Option<String> {
-        self.data.get(key).cloned()
-    }
-
-    fn persist(&self) -> io::Result<()> {
-        let file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&self.file_path)?;
-        serde_json::to_writer(file, &self.data)?;
-        Ok(())
+        match self.db.get(key) {
+            Ok(Some(value)) => String::from_utf8(value).ok(),
+            _ => None,
+        }
     }
 }
 

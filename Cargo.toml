@@ -15,6 +15,7 @@ prost = "0.13.5"
 tonic = "0.13.0"
 log = "0.4.27"
 env_logger = "0.11.8"
+rocksdb = "0.23.0"
 
 [build-dependencies]
 tonic-build = "0.13.0"

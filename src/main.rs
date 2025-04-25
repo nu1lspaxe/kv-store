@@ -14,7 +14,7 @@ use store::KvStore;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let addr = "[::1]:50051".parse()?;
-    let store = Arc::new(RwLock::new(KvStore::new("kv_store.json")));
+    let store = Arc::new(RwLock::new(KvStore::new("kv_store")));
     let server = create_server(store);
 
     info!("Starting server on {}", addr);
