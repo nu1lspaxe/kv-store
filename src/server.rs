@@ -1,13 +1,27 @@
 use tonic::{Request, Response, Status};
 use crate::store::SharedKvStore;
 use kvstore::kv_store_server::{KvStore, KvStoreServer};
-use kvstore::{PutRequest, PutResponse, GetRequest, GetResponse, ListRequest, ListResponse, DeleteRequest, DeleteResponse, DeleteAllRequest, DeleteAllResponse, KeyValue};
+use kvstore::{
+    PutRequest, PutResponse, 
+    GetRequest, GetResponse, 
+    ListRequest, ListResponse, 
+    DeleteRequest, DeleteResponse, 
+    DeleteAllRequest, DeleteAllResponse, 
+    WatchRequest, WatchResponse,
+    KeyValue, Event,
+};
+use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::StreamExt;
+use futures_util::stream::Stream; 
+use std::pin::Pin;
+use crate::server::kvstore::event::EventType;
+
 
 pub mod kvstore {
     tonic::include_proto!("kvstore");
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct KvStoreService {
     store: SharedKvStore,
 }
@@ -84,6 +98,47 @@ impl KvStore for KvStoreService {
             .map_err(|e| Status::internal(e.to_string()))?;
         Ok(Response::new(DeleteAllResponse { success: true}))
     }
+
+    type WatchStream = Pin<Box<dyn Stream<Item = Result<WatchResponse, Status>> + Send>>;
+
+    async fn watch(
+        &self,
+        request: Request<WatchRequest>,
+    ) -> Result<Response<Self::WatchStream>, Status> {
+        let key = request.into_inner().key;
+        let receiver = self.store.read().await.watcher.subscribe();
+        let watch_id = rand::random::<u64>();
+
+        let output = BroadcastStream::new(receiver)
+            .filter_map(move |event| {
+                match event {
+                    Ok((event_key, value, op)) if event_key == key => {
+                        let event_type = match op.as_str() {
+                            "PUT" => EventType::Put,
+                            "DELETE" => EventType::Delete,
+                            _ => return None,
+                        };
+
+                        Some(Ok(WatchResponse {
+                            watch_id: watch_id, 
+                            events: vec![Event {
+                                r#type: event_type.into(),
+                                kv: Some(KeyValue {
+                                    key: event_key,
+                                    value,
+                                }),
+                            }],
+                        }))
+                    }
+                    _ => None,
+                }
+            });
+
+        let stream = Box::pin(output) as Self::WatchStream;
+
+        Ok(Response::new(stream))
+}
+
 }
 
 pub fn create_server(store: SharedKvStore) -> KvStoreServer<KvStoreService> {

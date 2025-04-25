@@ -2,10 +2,12 @@ use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use rocksdb::{DB, Options};
+use tokio::sync::broadcast;
 
 #[derive(Debug)]
 pub struct KvStore {
     db: DB,
+    pub watcher: broadcast::Sender<(String, String, String)>, // (key, value, op)
 }
 
 impl KvStore {
@@ -13,11 +15,13 @@ impl KvStore {
         let mut opts = Options::default();
         opts.create_if_missing(true);
         let db = DB::open(&opts, path).expect("Failed to open RocksDB");
-        KvStore { db }
+        let (tx, _) = broadcast::channel(32);
+        KvStore { db, watcher: tx }
     }
 
     pub async fn put(&self, key: String, value: String) -> Result<(), rocksdb::Error> {
-        self.db.put(key, value)?;
+        self.db.put(&key, &value)?;
+        let _ = self.watcher.send((key, value, "PUT".into()));
         Ok(())
     }
 
@@ -30,7 +34,12 @@ impl KvStore {
 
     pub async fn prefix_scan(&self, prefix: &str) -> Vec<(String, String)> {
         let mut result = Vec::new();
-        let iter = self.db.prefix_iterator(prefix.as_bytes());
+
+        let iter = if prefix.is_empty() {
+            self.db.iterator(rocksdb::IteratorMode::Start)
+        } else {
+            self.db.prefix_iterator(prefix)
+        };
 
         for item in iter {
             if let Ok((k, v)) = item {
@@ -38,7 +47,9 @@ impl KvStore {
                     String::from_utf8(k.to_vec()),
                     String::from_utf8(v.to_vec())
                 ) {
-                    result.push((key, value));
+                    if prefix.is_empty() || key.starts_with(prefix) {
+                        result.push((key, value));
+                    }
                 }
             }
         }
@@ -46,7 +57,8 @@ impl KvStore {
     }
 
     pub async fn delete(&self, key: &str) -> Result<(), rocksdb::Error> {
-        self.db.delete(key)?;
+        self.db.delete(&key)?;
+        let _ = self.watcher.send((key.to_string(), "".to_string(), "DELETE".into()));
         Ok(())
     }
 
@@ -54,7 +66,8 @@ impl KvStore {
         let iter = self.db.iterator(rocksdb::IteratorMode::Start);
         for item in iter {
             if let Ok((k, _)) = item {
-                self.db.delete(k)?;
+                self.db.delete(&k)?;
+                let _ = self.watcher.send((String::from_utf8(k.to_vec()).unwrap(), "".to_string(), "DELETE".into()));
             }
         }
         Ok(())

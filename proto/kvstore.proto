@@ -8,6 +8,7 @@ service KVStore {
     rpc List (ListRequest) returns (ListResponse);
     rpc Delete (DeleteRequest) returns (DeleteResponse);
     rpc DeleteAll (DeleteAllRequest) returns (DeleteAllResponse);
+    rpc Watch (WatchRequest) returns (stream WatchResponse);
 }
 
 message PutRequest {
@@ -50,7 +51,25 @@ message DeleteAllResponse {
     bool success = 1;
 }
 
+message WatchRequest {
+    string key = 1;
+}
+
+message WatchResponse {
+    uint64 watch_id = 1;
+    repeated Event events = 2;
+}
+
 message KeyValue {
     string key = 1;
     string value = 2;
+}
+
+message Event {
+    enum EventType {
+        PUT = 0;
+        DELETE = 1;
+    }
+    EventType type = 1;
+    KeyValue kv = 2;
 }
