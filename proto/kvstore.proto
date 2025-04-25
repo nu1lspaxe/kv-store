@@ -6,6 +6,8 @@ service KVStore {
     rpc Put (PutRequest) returns (PutResponse);
     rpc Get (GetRequest) returns (GetResponse);
     rpc List (ListRequest) returns (ListResponse);
+    rpc Delete (DeleteRequest) returns (DeleteResponse);
+    rpc DeleteAll (DeleteAllRequest) returns (DeleteAllResponse);
 }
 
 message PutRequest {
@@ -31,6 +33,21 @@ message ListRequest {
 
 message ListResponse {
     repeated KeyValue items = 1;
+}
+
+message DeleteRequest {
+    string key = 1;
+}
+
+message DeleteResponse {
+    bool success = 1;
+}
+
+message DeleteAllRequest {
+}
+
+message DeleteAllResponse {
+    bool success = 1;
 }
 
 message KeyValue {

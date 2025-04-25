@@ -42,9 +42,28 @@ impl KvStore {
                 }
             }
         }
-
         result
     }
+
+    pub async fn delete(&self, key: &str) -> Result<(), rocksdb::Error> {
+        self.db.delete(key)?;
+        Ok(())
+    }
+
+    pub async fn delete_all(&self) -> Result<(), rocksdb::Error> {
+        let iter = self.db.iterator(rocksdb::IteratorMode::Start);
+        for item in iter {
+            if let Ok((k, _)) = item {
+                self.db.delete(k)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn close(&self) {
+        self.db.flush().expect("Failed to flush RocksDB");
+    }
+
 }
 
 pub type SharedKvStore = Arc<RwLock<KvStore>>;

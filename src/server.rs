@@ -1,7 +1,7 @@
 use tonic::{Request, Response, Status};
 use crate::store::SharedKvStore;
 use kvstore::kv_store_server::{KvStore, KvStoreServer};
-use kvstore::{PutRequest, PutResponse, GetRequest, GetResponse, ListRequest, ListResponse, KeyValue};
+use kvstore::{PutRequest, PutResponse, GetRequest, GetResponse, ListRequest, ListResponse, DeleteRequest, DeleteResponse, DeleteAllRequest, DeleteAllResponse, KeyValue};
 
 pub mod kvstore {
     tonic::include_proto!("kvstore");
@@ -58,6 +58,31 @@ impl KvStore for KvStoreService {
             .collect();
 
         Ok(Response::new(ListResponse { items }))
+    }
+
+    async fn delete(
+        &self,
+        request: Request<DeleteRequest>,
+    ) -> Result<Response<DeleteResponse>, Status> {
+        let req = request.into_inner();
+        let store = self.store.write().await;
+        store
+            .delete(&req.key)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+        Ok(Response::new(DeleteResponse { success: true}))
+    }
+
+    async fn delete_all(
+        &self,
+        _request: Request<DeleteAllRequest>,
+    ) -> Result<Response<DeleteAllResponse>, Status> {
+        let store = self.store.write().await;
+        store
+            .delete_all()
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+        Ok(Response::new(DeleteAllResponse { success: true}))
     }
 }
 

@@ -1,6 +1,6 @@
 use log::info;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::{signal, sync::RwLock};
 use tonic::transport::Server;
 
 mod server;
@@ -15,12 +15,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let addr = "[::1]:50051".parse()?;
     let store = Arc::new(RwLock::new(KvStore::new("kvstore")));
-    let server = create_server(store);
+    let server = create_server(store.clone());
 
-    info!("Starting server on {}", addr);
+    info!("🚀 KvStoreServer listening on {}", addr);
+
+    let shutdown = async {
+        signal::ctrl_c()
+            .await
+            .expect("❌ Failed to shutdown with Ctrl+C");
+
+        info!("🛑 Shutdown signal received. Flushing database..");
+        store.write().await.close().await;
+        info!("✅ Database flushed. Exiting.");
+    };
+
     Server::builder()
         .add_service(server)
-        .serve(addr)
+        .serve_with_shutdown(addr, shutdown)
         .await?;
 
     Ok(())

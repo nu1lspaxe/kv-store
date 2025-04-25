@@ -1,16 +1,28 @@
 use kvstore::kv_store_client::KvStoreClient;
-use kvstore::{PutRequest, GetRequest, ListRequest};
+use kvstore::{PutRequest, GetRequest, ListRequest, DeleteRequest, DeleteAllRequest};
 use std::io::{self, Write};
 
 pub mod kvstore {
     tonic::include_proto!("kvstore");
 }
 
+fn help() {
+    println!("Available commands:");
+    println!("  put <key> <value>   - Insert a key-value pair");
+    println!("  get <key>           - Retrieve the value for a key");
+    println!("  list                - List all key-value pairs");
+    println!("  delete <key>        - Delete a key-value pair");
+    println!("  delete_all          - Delete all key-value pairs");
+    println!("  exit                - Exit the client");
+    println!("  help                - Show this help message");
+}
+
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = KvStoreClient::connect("http://[::1]:50051").await?;
 
-    println!("Connected to gRPC KvStore server. Type commands (put/get/list/exit):");
+    println!("Connected to gRPC KvStore server. Type commands `help` to see available commands:");
 
     loop {
         print!("> ");
@@ -27,8 +39,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     value: value.to_string(),
                 };
                 match client.put(request).await {
-                    Ok(response) => println!("Put: {:?}", response),
-                    Err(e) => eprintln!("Error: {:?}", e),
+                    Ok(response) => println!("✅ Put: {:?}", response),
+                    Err(e) => eprintln!("❌ Error: {:?}", e),
                 }
             }
 
@@ -37,8 +49,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     key: key.to_string(),
                 };
                 match client.get(request).await {
-                    Ok(response) => println!("Get: {:?}", response),
-                    Err(e) => eprintln!("Error: {:?}", e),
+                    Ok(response) => println!("✅ Get: {:?}", response),
+                    Err(e) => eprintln!("❌ Error: {:?}", e),
                 }
             }
 
@@ -49,19 +61,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 match client.list(request).await {
                     Ok(response) => {
-                        println!("List: {:#?}", response.into_inner().items);
+                        println!("✅ List: {:#?}", response.into_inner().items);
                     }
-                    Err(e) => eprintln!("Error: {:?}", e),
+                    Err(e) => eprintln!("❌ Error: {:?}", e),
                 }
+            }
+
+            ["delete", key] => {
+                let request = DeleteRequest {
+                    key: key.to_string(),
+                };
+                match client.delete(request).await {
+                    Ok(response) => println!("✅ Delete: {:?}", response),
+                    Err(e) => eprintln!("❌ Error: {:?}", e),
+                }
+            }
+
+            ["delete_all"] => {
+                let request = DeleteAllRequest {};
+                match client.delete_all(request).await {
+                    Ok(response) => println!("✅ Delete All: {:?}", response),
+                    Err(e) => eprintln!("❌ Error: {:?}", e),
+                }
+            }
+
+            ["help"] => {
+                help();
             }
                 
             ["exit"] => {
-                println!("Exiting...");
+                println!("🛑 Exiting...");
                 break;
             }
 
             _ => {
-                println!("Unknown command. Use 'put <key> <value>', 'get <key>', 'list <prefix>', or 'exit'");
+                println!("❌ Unknown command. Use `help` to see available commands.");
             }
         }
     }
