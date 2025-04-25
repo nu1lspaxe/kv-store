@@ -1,5 +1,5 @@
 use kvstore::kv_store_client::KvStoreClient;
-use kvstore::{PutRequest, GetRequest, ListRequest, DeleteRequest, DeleteAllRequest};
+use kvstore::{DeleteAllRequest, DeleteRequest, GetRequest, ListRequest, PutRequest, WatchRequest};
 use std::io::{self, Write};
 
 pub mod kvstore {
@@ -10,7 +10,8 @@ fn help() {
     println!("Available commands:");
     println!("  put <key> <value>   - Insert a key-value pair");
     println!("  get <key>           - Retrieve the value for a key");
-    println!("  list                - List all key-value pairs");
+    println!("  list <prefix>       - List all key-value pairs with a given prefix");
+    println!("  watch <key>         - Watch for changes to a key");
     println!("  delete <key>        - Delete a key-value pair");
     println!("  delete_all          - Delete all key-value pairs");
     println!("  exit                - Exit the client");
@@ -54,6 +55,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
+            ["list"] => {
+                let request = ListRequest {
+                    prefix: "".to_string(),
+                };
+                match client.list(request).await {
+                    Ok(response) => {
+                        println!("✅ List: {:#?}", response.into_inner().items);
+                    }
+                    Err(e) => eprintln!("❌ Error: {:?}", e),
+                }
+            }
+
             ["list", prefix] => {
                 let request = ListRequest {
                     prefix: prefix.to_string(),
@@ -64,6 +77,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("✅ List: {:#?}", response.into_inner().items);
                     }
                     Err(e) => eprintln!("❌ Error: {:?}", e),
+                }
+            }
+
+            ["watch", key] => {
+                let request = WatchRequest {
+                    key: key.to_string(),
+                };
+                let mut stream = client.watch(request).await?.into_inner();
+
+                while let Some(resposne) = stream.message().await? {
+                    println!("🔔 Watch: {:?}", resposne);
+
+                    for event in resposne.events {
+                        println!(
+                            "🔔 Event: Key: {}, Value: {}, Type: {:?}",
+                            event.kv.as_ref().map_or("", |kv| &kv.key),
+                            event.kv.as_ref().map_or("", |kv| &kv.value),
+                            event.r#type,
+                        );
+                    }
                 }
             }
 
