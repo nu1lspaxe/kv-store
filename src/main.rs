@@ -3,18 +3,16 @@ use std::sync::Arc;
 use tokio::{signal, sync::RwLock};
 use tonic::transport::Server;
 
-mod server;
-mod store;
-
-use server::create_server;
-use store::KvStore;
+mod kvstore;
+use kvstore::server::create_server;
+use kvstore::store::KvStore;
 
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let addr = "[::1]:50051".parse()?;
-    let store = Arc::new(RwLock::new(KvStore::new("kvstore")));
+    let store = Arc::new(RwLock::new(KvStore::new("kv-store.db")));
     let server = create_server(store.clone());
 
     info!("🚀 KvStoreServer listening on {}", addr);

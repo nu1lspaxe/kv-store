@@ -55,19 +55,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            ["list"] => {
-                let request = ListRequest {
-                    prefix: "".to_string(),
-                };
-                match client.list(request).await {
-                    Ok(response) => {
-                        println!("✅ List: {:#?}", response.into_inner().items);
+            ["list"] | ["list", ..] => {
+                let prefix = match parts.len() {
+                    1 => "",
+                    2 => parts[1],
+                    _ => {
+                        eprintln!("⚠️ Invalid command. Use `list <prefix>` to list with a prefix.");
+                        continue;
                     }
-                    Err(e) => eprintln!("❌ Error: {:?}", e),
-                }
-            }
-
-            ["list", prefix] => {
+                };
                 let request = ListRequest {
                     prefix: prefix.to_string(),
                 };
@@ -128,7 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             _ => {
-                println!("❌ Unknown command. Use `help` to see available commands.");
+                println!("⚠️ Unknown command. Use `help` to see available commands.");
             }
         }
     }
