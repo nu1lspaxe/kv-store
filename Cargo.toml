@@ -19,6 +19,9 @@ env_logger = "0.11.8"
 rocksdb = "0.23.0"
 rand = "0.9.1"
 futures-util = "0.3.31"
+openraft = { version = "0.9.18", features = ["serde"] }
+thiserror = "2.0.12"
+async-trait = "0.1.88"
 
 [build-dependencies]
 tonic-build = "0.13.0"
