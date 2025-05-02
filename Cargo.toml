@@ -22,6 +22,9 @@ futures-util = "0.3.31"
 openraft = { version = "0.9.18", features = ["serde"] }
 thiserror = "2.0.12"
 async-trait = "0.1.88"
+byteorder = "1.5.0"
+tracing = "0.1.41"
+async-std = "1.13.1"
 
 [build-dependencies]
 tonic-build = "0.13.0"

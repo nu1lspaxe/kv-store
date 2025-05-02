@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use super::type_config::{RocksNodeId, StorageResult};
 
-
-
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct SerializableRocksStateMachine {
     pub last_applied_log: Option<LogId<RocksNodeId>>,
@@ -66,7 +64,7 @@ impl RocksStateMachine {
         self.db.cf_handle("sm_data").unwrap()
     }
 
-    fn get_last_membership(&self) -> StorageResult<StoredMembership<RocksNodeId, BasicNode>> {
+    pub fn get_last_membership(&self) -> StorageResult<StoredMembership<RocksNodeId, BasicNode>> {
         self.db
             .get_cf(self.cf_sm_meta(),"last_membership".as_bytes())
             .map_err(sm_r_err)
@@ -77,7 +75,7 @@ impl RocksStateMachine {
             })
     }
 
-    fn set_last_membership(&self, membership: StoredMembership<RocksNodeId, BasicNode>) -> StorageResult<()> {
+    pub fn set_last_membership(&self, membership: StoredMembership<RocksNodeId, BasicNode>) -> StorageResult<()> {
         self.db
             .put_cf(
                 self.cf_sm_meta(), 
@@ -87,7 +85,7 @@ impl RocksStateMachine {
             .map_err(sm_w_err)
     }
 
-    fn get_last_applied_log(&self) -> StorageResult<Option<LogId<RocksNodeId>>> {
+    pub fn get_last_applied_log(&self) -> StorageResult<Option<LogId<RocksNodeId>>> {
         self.db
             .get_cf(self.cf_sm_meta(), "last_applied_log".as_bytes())
             .map_err(sm_r_err)
@@ -98,7 +96,7 @@ impl RocksStateMachine {
             })
     }
 
-    fn set_last_applied_log(&self, log_id: &LogId<RocksNodeId>) -> StorageResult<()> {
+    pub fn set_last_applied_log(&self, log_id: &LogId<RocksNodeId>) -> StorageResult<()> {
         self.db
             .put_cf(
                 self.cf_sm_meta(), 
@@ -108,7 +106,7 @@ impl RocksStateMachine {
             .map_err(sm_w_err)
     }
 
-    fn from_serializable(
+    pub fn from_serializable(
         sm: SerializableRocksStateMachine, 
         db: Arc<DB>
     ) -> StorageResult<Self> {
@@ -127,7 +125,7 @@ impl RocksStateMachine {
         Ok(r)
     }
 
-    fn new(db: Arc<DB>) -> RocksStateMachine {
+    pub fn new(db: Arc<DB>) -> RocksStateMachine {
         Self { db }
     }
 
