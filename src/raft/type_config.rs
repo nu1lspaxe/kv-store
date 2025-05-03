@@ -1,7 +1,7 @@
 use std::io::Cursor;
 use openraft::{BasicNode, Entry, StorageError, TokioRuntime};
 
-use super::client::{RocksRequest, RocksResponse};
+use super::rocks_client::{RocksRequest, RocksResponse};
 
 pub type RocksNodeId = u64;
 

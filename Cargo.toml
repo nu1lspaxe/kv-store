@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
-name = "kv-cli"
-path = "src/client.rs"
+name = "kv-client"
+path = "src/kvstore/client.rs"
 
 [dependencies]
 tokio = { version = "1.44.2", features = ["full"] }

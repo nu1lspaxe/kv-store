@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package raft_service;
+
+service RaftService {
+    rpc Put (PutRequest) returns (PutResponse);
+    rpc Get (GetRequest) returns (GetResponse);
+    rpc Delete (DeleteRequest) returns (DeleteResponse);
+}
+
+message PutRequest {
+    string key = 1;
+    string value = 2;
+}
+
+message PutResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message GetRequest {
+    string key = 1;
+}
+
+message GetResponse {
+    string value = 1;
+    bool found = 2;
+    string error = 3;
+}
+
+message DeleteRequest {
+    string key = 1;
+}
+
+message DeleteResponse {
+    bool success = 1;
+    string error = 2;
+}

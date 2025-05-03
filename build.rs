@@ -3,7 +3,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build_server(true)
         .build_client(true)
         .compile_protos(
-            &["proto/kvstore.proto"],
+            &["proto/kvstore.proto", "proto/raft_service.proto"],
             &["proto"],
         )?;
     Ok(())

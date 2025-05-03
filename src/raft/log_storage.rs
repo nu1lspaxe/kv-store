@@ -10,9 +10,9 @@ use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use std::fmt::Debug;
 use serde::{Deserialize, Serialize};
 
-use crate::raft::client::{ClientError, RocksRequest};
+use crate::raft::rocks_client::{ClientError, RocksRequest};
 
-use super::client::RocksResponse;
+use super::rocks_client::RocksResponse;
 use super::{
     state_machine::{RocksStateMachine, SerializableRocksStateMachine}, 
     type_config::{RocksNodeId, StorageResult, TypeConfig}
@@ -349,19 +349,13 @@ impl RaftStorage<TypeConfig> for Arc<RocksStore> {
             sm.set_last_applied_log(&entry.log_id)?;
 
             match &entry.payload {
-                EntryPayload::Blank => res.push(RocksResponse::Get(None)),
+                EntryPayload::Blank => res.push(RocksResponse::Put(Ok(()))),
                 EntryPayload::Normal(req) => match req {
                     RocksRequest::Put { key, value } => {
                         let result = sm.put(key.clone(), value.clone()).map_err(|e| {
                             ClientError::InternalError(e.to_string())
                         });
                         res.push(RocksResponse::Put(result));
-                    }
-                    RocksRequest::Get { key } => {
-                        let value = sm.get(key.to_string())
-                            .map_err(|e| ClientError::InternalError(e.to_string()))
-                            .unwrap_or(None);
-                        res.push(RocksResponse::Get(value));
                     }
                     RocksRequest::Delete { key } => {
                         let result = sm.delete(key.to_string()).map_err(|e| {
@@ -372,7 +366,7 @@ impl RaftStorage<TypeConfig> for Arc<RocksStore> {
                 },
                 EntryPayload::Membership(mem) => {
                     sm.set_last_membership(StoredMembership::new(Some(entry.log_id), mem.clone()))?;
-                    res.push(RocksResponse::Get(None));
+                    res.push(RocksResponse::Put(Ok(())));
                 }
             };
         }
