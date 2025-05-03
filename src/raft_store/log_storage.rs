@@ -10,7 +10,7 @@ use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 use std::fmt::Debug;
 use serde::{Deserialize, Serialize};
 
-use crate::raft::rocks_client::{ClientError, RocksRequest};
+use crate::raft_store::rocks_client::{ClientError, RocksRequest};
 
 use super::rocks_client::RocksResponse;
 use super::{
@@ -44,8 +44,8 @@ mod meta {
     use serde::de::DeserializeOwned;
     use serde::Serialize;
 
-    use crate::raft::type_config::RocksNodeId;
-    use crate::raft::log_storage::RocksSnapshot;
+    use crate::raft_store::type_config::RocksNodeId;
+    use crate::raft_store::log_storage::RocksSnapshot;
 
     pub(crate) trait StoreMeta {
         /// The key used to store in rocksdb

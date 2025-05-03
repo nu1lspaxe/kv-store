@@ -1148,6 +1148,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "byteorder",
+ "clap",
  "env_logger",
  "futures-util",
  "log",
