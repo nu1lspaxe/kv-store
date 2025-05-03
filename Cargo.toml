@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
-name = "kv-client"
-path = "src/kvstore/client.rs"
+name = "kv-cli"
+path = "src/kvstore/client/client.rs"
+[[bin]]
+name = "raft-cli"
+path = "src/raft/client/cli.rs"
 
 [dependencies]
 tokio = { version = "1.44.2", features = ["full"] }
@@ -25,6 +28,7 @@ async-trait = "0.1.88"
 byteorder = "1.5.0"
 tracing = "0.1.41"
 async-std = "1.13.1"
+clap = { version = "4.5.37", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = "0.13.0"
