@@ -7,8 +7,6 @@ mod kvstore;
 use kvstore::server::create_server;
 use kvstore::store::KvStore;
 
-mod raft_store;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
@@ -34,4 +32,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     Ok(())
+
 }
